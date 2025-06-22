@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compromiso del Fundador - Editor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f3f4f6; /* Tailwind gray-100 */
+    }
+    #documentEditor {
+      background-color: white;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 40px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+    .toolbar {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 15px;
+      background-color: #e5e7eb; /* Tailwind gray-200 */
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .toolbar button {
+      background-color: #df1783; /* Custom Pink */
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .toolbar button:hover {
+      background-color: #c01474; /* Darker Custom Pink */
+    }
+    .toolbar button:disabled {
+      background-color: #9ca3af; /* Tailwind gray-400 */
+      cursor: not-allowed;
+    }
+    .form-section { margin-bottom: 20px; }
+    .form-section label { font-weight: 600; display: block; margin-bottom: 5px; color: #374151; /* Tailwind gray-700 */ }
+    
+    input[type="text"].interactive-input,
+    input[type="date"].interactive-input {
+      border: none;
+      border-bottom: 1px solid #9ca3af; /* Tailwind gray-400 */
+      padding: 2px 0px;
+      font-family: 'Poppins', sans-serif;
+      font-size: inherit;
+      color: inherit;
+      background-color: transparent;
+    }
+    input[type="text"].interactive-input:focus,
+    input[type="date"].interactive-input:focus {
+      outline: none;
+      border-bottom: 1px solid #3b82f6; /* Tailwind blue-500 */
+    }
+    .inline-input-container {
+        display: inline;
+    }
+
+    .content-editable-placeholder {
+      display: block; 
+      width: 100%;
+      min-height: 24px;
+      border: 1px dashed #d1d5db; /* Tailwind gray-300 */
+      padding: 5px;
+      margin-top: 3px;
+      color: #6b7280; /* Tailwind gray-500 */
+      cursor: text;
+      background-color: #f9fafb; /* Tailwind gray-50 */
+    }
+    .content-editable-placeholder:focus {
+      outline: 1px solid #3b82f6; /* Tailwind blue-500 */
+      border: 1px solid #3b82f6;
+      color: #1f2937; /* Tailwind gray-800 */
+      background-color: white;
+    }
+    h1.doc-title { text-align: center; font-size: 1.8em; font-weight: 700; margin-bottom:25px; color: #1e3a8a; /* Tailwind blue-800 */}
+    h2.section-title { font-size: 1.3em; font-weight: 600; margin-top: 25px; margin-bottom:12px; color: #1e40af; /* Tailwind blue-700 */ border-bottom: 1px solid #e5e7eb; padding-bottom: 5px;}
+    h3.sub-section-title { font-size: 1.1em; font-weight: 600; margin-top: 15px; margin-bottom:8px; color: #1d4ed8; /* Tailwind blue-600 */}
+    p, li { line-height: 1.7; color: #374151; /* Tailwind gray-700 */ }
+    ul { list-style-position: inside; padding-left: 0; } 
+    ul li { margin-bottom: 10px; }
+    .signature-section { margin-top: 30px; }
+    .date-fields-container { display: flex; justify-content: space-between; margin-top: 5px; flex-wrap: wrap; }
+    .date-field { margin-bottom: 10px; }
+
+    #bottomActionsContainer {
+      max-width: 800px;
+      margin: 30px auto;
+      text-align: center;
+    }
+    #saveCommitmentBtnBottom {
+      background-color: #df1783; /* Tailwind green-500 */
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    #saveCommitmentBtnBottom:hover {
+      background-color: #c01474; /* Tailwind green-600 */
+    }
+     #saveCommitmentBtnBottom:disabled {
+      background-color: #9ca3af; /* Tailwind gray-400 */
+      cursor: not-allowed;
+    }
+
+
+    /* Print specific styles */
+    @media print {
+      body {
+        background-color: white !important;
+        margin: 0;
+        padding: 0;
+      }
+      .toolbar, #googleSheetsInstructions, #emailJSInstructions, #userMessages, #bottomActionsContainer {
+        display: none !important;
+      }
+      #documentEditor {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 10mm !important; 
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        border: none !important;
+        font-size: 10pt; 
+      }
+      input[type="text"].interactive-input,
+      input[type="date"].interactive-input {
+        border-bottom: 1px solid #000 !important; 
+        color: #000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .content-editable-placeholder {
+        border: none !important;
+        padding: 0 !important;
+        color: #000 !important; 
+        background-color: white !important;
+      }
+      h1.doc-title { font-size: 16pt; }
+      h2.section-title { font-size: 12pt; }
+      h3.sub-section-title { font-size: 11pt; }
+      a[href]:after { content: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar" id="topToolbar" style="display: none;">
+    <button id="downloadPdfBtn">Descargar PDF</button>
+    <button id="saveToSheetsBtn">Actualizar en Google Sheets</button>
+    <button id="addToCalendarBtn">Añadir a Google Calendar</button>
+    <button id="sendEmailBtn">Enviar por Email</button>
+  </div>
+
+  <div id="userMessages" class="max-w-xl mx-auto my-2 text-center"></div>
+
+  <div id="documentEditor">
+    <h1 class="doc-title">Compromiso del Fundador Exitoso</h1>
+
+    <p>
+      Yo, <span class="inline-input-container"><input type="text" id="fullName" class="interactive-input" placeholder="Tu nombre completo aquí" style="min-width: 250px;"></span>, me comprometo a trabajar con enfoque, disciplina y constancia en el desarrollo de mi negocio digital, utilizando las herramientas, recursos y formación del programa El Negocio Digital.
+    </p>
+
+    <p>Me comprometo a:</p>
+    <ol class="list-decimal list-inside ml-4">
+      <li>Dedicar tiempo y energía de manera consistente para avanzar en cada una de las fases del programa.</li>
+      <li>Cumplir metas claras, tanto a corto como a largo plazo, incluyendo pero no limitándome a:</li>
+    </ol>
+
+    <h2 class="section-title">📌 Metas a Corto Plazo</h2>
+    <ul>
+      <li><div id="shortTermGoal1" contenteditable="true" class="content-editable-placeholder">Establecer mis objetivos personales y profesionales.</div></li>
+      <li><div id="shortTermGoal2" contenteditable="true" class="content-editable-placeholder">Tomar los cursos del programa El Negocio Digital y aplicar los conocimientos adquiridos paso a paso.</div></li>
+      <li><div id="shortTermGoal3" contenteditable="true" class="content-editable-placeholder">Organizar mi agenda semanal para dedicar tiempo exclusivo a mi proyecto digital.</div></li>
+      <li><div id="shortTermGoal4" contenteditable="true" class="content-editable-placeholder">Crear un espacio de trabajo funcional y mantener disciplina y foco.</div></li>
+      <li><div id="shortTermGoal5" contenteditable="true" class="content-editable-placeholder">Participar activamente en las sesiones, grupos o comunidades del programa.</div></li>
+    </ul>
+
+    <h2 class="section-title">🚀 Metas por Fase del Programa</h2>
+
+    <h3 class="sub-section-title">1. Preparación / Investigación</h3>
+    <ul>
+      <li><div id="phase1Goal1" contenteditable="true" class="content-editable-placeholder">Identificar mis talentos, intereses y el problema que quiero resolver.</div></li>
+      <li><div id="phase1Goal2" contenteditable="true" class="content-editable-placeholder">Investigar mi nicho de mercado, tendencias y competidores.</div></li>
+      <li><div id="phase1Goal3" contenteditable="true" class="content-editable-placeholder">Definir mi cliente ideal y su recorrido de compra.</div></li>
+    </ul>
+
+    <h3 class="sub-section-title">2. Creación</h3>
+    <ul>
+      <li><div id="phase2Goal1" contenteditable="true" class="content-editable-placeholder">Construir mi propuesta de valor y mi primer producto o servicio.</div></li>
+      <li><div id="phase2Goal2" contenteditable="true" class="content-editable-placeholder">Desarrollar los elementos esenciales de mi presencia digital: marca, nombre, logo, canales, etc.</div></li>
+      <li><div id="phase2Goal3" contenteditable="true" class="content-editable-placeholder">Crear mis perfiles de redes y herramientas básicas de contacto.</div></li>
+    </ul>
+
+    <h3 class="sub-section-title">3. Lanzamiento</h3>
+    <ul>
+      <li><div id="phase3Goal1" contenteditable="true" class="content-editable-placeholder">Planificar y ejecutar el lanzamiento mínimo viable de mi negocio digital.</div></li>
+      <li><div id="phase3Goal2" contenteditable="true" class="content-editable-placeholder">Compartir mi proyecto con mi red cercana y primeros seguidores.</div></li>
+      <li><div id="phase3Goal3" contenteditable="true" class="content-editable-placeholder">Obtener retroalimentación inicial del mercado real.</div></li>
+    </ul>
+
+    <h3 class="sub-section-title">4. Adaptación</h3>
+    <ul>
+      <li><div id="phase4Goal1" contenteditable="true" class="content-editable-placeholder">Evaluar resultados y ajustar mi mensaje, propuesta y procesos según la realidad del mercado.</div></li>
+      <li><div id="phase4Goal2" contenteditable="true" class="content-editable-placeholder">Crear contenido que eduque, conecte y posicione.</div></li>
+      <li><div id="phase4Goal3" contenteditable="true" class="content-editable-placeholder">Integrar reservas, pagos, y formularios funcionales en mi sitio web.</div></li>
+    </ul>
+
+    <h3 class="sub-section-title">5. Automatización</h3>
+    <ul>
+      <li><div id="phase5Goal1" contenteditable="true" class="content-editable-placeholder">Configurar sistemas de email marketing, embudos de venta, agendamiento automático y CRM.</div></li>
+      <li><div id="phase5Goal2" contenteditable="true" class="content-editable-placeholder">Reducir tareas manuales para enfocarme en lo estratégico.</div></li>
+      <li><div id="phase5Goal3" contenteditable="true" class="content-editable-placeholder">Conectar herramientas para mejorar productividad y atención al cliente.</div></li>
+    </ul>
+
+    <h3 class="sub-section-title">6. Optimización</h3>
+    <ul>
+      <li><div id="phase6Goal1" contenteditable="true" class="content-editable-placeholder">Analizar métricas clave y mejorar continuamente la experiencia del usuario.</div></li>
+      <li><div id="phase6Goal2" contenteditable="true" class="content-editable-placeholder">A/B testing de mensajes, diseños y canales de venta.</div></li>
+      <li><div id="phase6Goal3" contenteditable="true" class="content-editable-placeholder">Optimizar tiempo, procesos y retorno de inversión.</div></li>
+    </ul>
+
+    <h3 class="sub-section-title">7. Expansión</h3>
+    <ul>
+      <li><div id="phase7Goal1" contenteditable="true" class="content-editable-placeholder">Delegar tareas operativas y formar un pequeño equipo.</div></li>
+      <li><div id="phase7Goal2" contenteditable="true" class="content-editable-placeholder">Escalar campañas de marketing y llegar a nuevos segmentos.</div></li>
+      <li><div id="phase7Goal3" contenteditable="true" class="content-editable-placeholder">Multiplicar mi impacto mediante alianzas o nuevos canales digitales.</div></li>
+    </ul>
+
+    <h3 class="sub-section-title">8. Formalización</h3>
+    <ul>
+      <li><div id="phase8Goal1" contenteditable="true" class="content-editable-placeholder">Establecer estructura legal, financiera y administrativa para operar profesionalmente.</div></li>
+      <li><div id="phase8Goal2" contenteditable="true" class="content-editable-placeholder">Abrir cuenta bancaria empresarial, emitir facturas y manejar impuestos.</div></li>
+      <li><div id="phase8Goal3" contenteditable="true" class="content-editable-placeholder">Tener contratos, políticas claras y una imagen sólida ante clientes y proveedores.</div></li>
+    </ul>
+
+    <h2 class="section-title">✍️ Responsabilidad Personal</h2>
+    <p>
+      Yo, <span id="fullNameDisplayResponsibility" class="font-semibold">[Tu nombre completo aquí]</span>, asumo la responsabilidad total de mis resultados. Reconozco que cada negocio es único y que mi éxito dependerá de:
+    </p>
+    <ol class="list-decimal list-inside ml-4">
+      <li>Mi nivel de compromiso diario y mi ética de trabajo.</li>
+      <li>Mi disposición a aprender, aplicar, adaptarme y perseverar.</li>
+      <li>Mi capacidad para enfrentar dificultades sin rendirme.</li>
+      <li>El desarrollo constante de habilidades clave como liderazgo, organización, comunicación, ventas, visión estratégica y uso de herramientas digitales.</li>
+    </ol>
+    <p class="mt-4">Este compromiso lo hago conmigo mismo/a, como recordatorio de que el éxito no es casualidad, sino el resultado de decisiones conscientes y acciones consistentes.</p>
+
+    <div class="signature-section">
+      <div class="form-section">
+        <label for="signature">Firma:</label>
+        <input type="text" id="signature" class="interactive-input w-full" placeholder="Escribe tu nombre completo aquí para firmar">
+      </div>
+      <div class="date-fields-container">
+        <div class="date-field">
+          <label for="commitmentDate">Fecha:</label>
+          <input type="date" id="commitmentDate" class="interactive-input" value="${new Date().toISOString().split('T')[0]}">
+        </div>
+        <div class="date-field">
+          <label for="reviewDate">Próxima revisión:</label>
+          <input type="date" id="reviewDate" class="interactive-input" value="${(() => { const d = new Date(); d.setDate(d.getDate() + 90); return d.toISOString().split('T')[0]; })()}">
+          <div class="mt-1">
+            <button type="button" class="text-xs text-pink-600 hover:underline" onclick="setReviewDateOffset(90)">+90 días</button> |
+            <button type="button" class="text-xs text-pink-600 hover:underline" onclick="setReviewDateOffset(365)">+1 año</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  
+
+  <div id="bottomActionsContainer">
+    <button id="saveCommitmentBtnBottom">Afirmar Compromiso</button>
+  </div>
+  
+  
+  
+  
+  
+  
+  
+  <!-- BACK TO TOP ICON-->
+<script>
+// Create Back-to-Top Button Dynamically
+document.addEventListener("DOMContentLoaded", function () {
+    // Create the button container
+    const backToTop = document.createElement("div");
+    backToTop.id = "back-to-top";
+    backToTop.style.position = "fixed";
+    backToTop.style.bottom = "20px";
+    backToTop.style.right = "20px";
+    backToTop.style.display = "none";
+    backToTop.style.cursor = "pointer";
+    backToTop.style.zIndex = "9999";
+    // Create the image inside the button
+    const backToTopImg = document.createElement("img");
+    backToTopImg.src = "https://bucket.mlcdn.com/a/3336/3336910/images/29840e122b950f88fdca23072015101b427a9112.png";
+    backToTopImg.alt = "Volver arriba";
+    backToTopImg.style.width = "40px";
+    backToTopImg.style.height = "40px";
+    // Append image to the button
+    backToTop.appendChild(backToTopImg);
+    // Append button to the body
+    document.body.appendChild(backToTop);
+    // Scroll Event Listener
+    window.addEventListener("scroll", function () {
+        if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+            backToTop.style.display = "block";
+        } else {
+            backToTop.style.display = "none";
+        }
+    });
+    // Click Event for Scrolling to Top
+    backToTop.addEventListener("click", function () {
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    });
+});
+</script>
+<!-- END BACK TO TOP ICON-->
+  
+  
+  
+  
+  
+  
+  
+  
+
+
+  <script>
+    // ** CONFIGURACIÓN REQUERIDA **
+    const googleAppsScriptUrl = 'TU_GOOGLE_APPS_SCRIPT_URL_AQUI'; 
+    const emailJsServiceID = 'El_Negocio_Digital'; 
+    const emailJsTemplateID = 'template_x4ojn76';
+    const emailJsPublicKey = 'pzi6GkEVpxFMX_PUe'; 
+
+    if (emailJsServiceID !== 'El_Negocio_Digital' && emailJsPublicKey !== 'pzi6GkEVpxFMX_PUe') {
+        emailjs.init(emailJsPublicKey);
+    }
+
+    const fullNameInput = document.getElementById('fullName');
+    const fullNameDisplayResponsibility = document.getElementById('fullNameDisplayResponsibility');
+    const userMessages = document.getElementById('userMessages');
+    const topToolbar = document.getElementById('topToolbar');
+    const saveCommitmentBtnBottom = document.getElementById('saveCommitmentBtnBottom');
+    const saveToSheetsBtnTop = document.getElementById('saveToSheetsBtn'); // The button in the top toolbar
+
+    function updateDynamicContent() {
+      const name = fullNameInput.value || "[Tu nombre completo aquí]";
+      fullNameDisplayResponsibility.textContent = name;
+    }
+    
+    fullNameInput.addEventListener('input', updateDynamicContent);
+    updateDynamicContent();
+
+
+    function setReviewDateOffset(days) {
+        const reviewDateInput = document.getElementById('reviewDate');
+        const newDate = new Date(); 
+        const commitmentDateVal = document.getElementById('commitmentDate').value;
+        if (commitmentDateVal) {
+            const parts = commitmentDateVal.split('-');
+            if (parts.length === 3) {
+                newDate.setFullYear(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            }
+        }
+        newDate.setDate(newDate.getDate() + days);
+        reviewDateInput.value = newDate.toISOString().split('T')[0];
+    }
+
+    function getElementText(id) {
+        const el = document.getElementById(id);
+        return el ? (el.tagName === 'INPUT' ? el.value : el.innerText) : '';
+    }
+    
+    function collectData() {
+      const data = {
+        fullName: getElementText('fullName'),
+        commitmentDate: getElementText('commitmentDate'),
+        reviewDate: getElementText('reviewDate'),
+        signature: getElementText('signature') || getElementText('fullName'),
+        shortTermGoal1: getElementText('shortTermGoal1'),
+        shortTermGoal2: getElementText('shortTermGoal2'),
+        shortTermGoal3: getElementText('shortTermGoal3'),
+        shortTermGoal4: getElementText('shortTermGoal4'),
+        shortTermGoal5: getElementText('shortTermGoal5'),
+      };
+      for (let i = 1; i <= 8; i++) { 
+        for (let j = 1; j <= 3; j++) { 
+            data[`phase${i}Goal${j}`] = getElementText(`phase${i}Goal${j}`);
+        }
+      }
+      return data;
+    }
+
+    function showMessage(message, type = 'info') {
+        userMessages.innerHTML = ''; 
+        const messageDiv = document.createElement('div');
+        messageDiv.textContent = message;
+        if (type === 'success') {
+            messageDiv.className = 'p-2 bg-green-100 text-green-700 rounded transition-opacity duration-300 ease-out opacity-100';
+        } else if (type === 'error') {
+            messageDiv.className = 'p-2 bg-red-100 text-red-700 rounded transition-opacity duration-300 ease-out opacity-100';
+        } else {
+            messageDiv.className = 'p-2 bg-blue-100 text-blue-700 rounded transition-opacity duration-300 ease-out opacity-100';
+        }
+        userMessages.appendChild(messageDiv);
+        setTimeout(() => { 
+            messageDiv.classList.remove('opacity-100');
+            messageDiv.classList.add('opacity-0');
+            setTimeout(() => { userMessages.innerHTML = ''; }, 300);
+        }, 5000);
+    }
+
+    async function handleSaveToSheets(buttonElement, isInitialSave = false) {
+      if (googleAppsScriptUrl === 'TU_GOOGLE_APPS_SCRIPT_URL_AQUI' || !googleAppsScriptUrl) {
+        showMessage('Error: La URL de Google Apps Script no está configurada. Sigue las instrucciones.', 'error');
+        document.getElementById('googleSheetsInstructions').scrollIntoView({ behavior: 'smooth' });
+        return false; // Indicate failure
+      }
+      updateDynamicContent();
+      const data = collectData();
+      if (!data.fullName || !data.commitmentDate || !data.signature) {
+        showMessage('Por favor, completa Nombre, Fecha de Compromiso y Firma antes de guardar.', 'error');
+        return false; // Indicate failure
+      }
+      
+      const originalButtonText = buttonElement.textContent;
+      buttonElement.disabled = true;
+      buttonElement.textContent = 'Guardando...';
+
+      try {
+        const payload = {};
+        for (const key in data) {
+            payload[key.charAt(0).toUpperCase() + key.slice(1)] = data[key];
+        }
+
+        const response = await fetch(googleAppsScriptUrl, {
+          method: 'POST',
+          mode: 'cors', 
+          body: JSON.stringify(payload), 
+          redirect: "follow" 
+        });
+        const result = await response.json(); 
+
+        if (result.result === 'success') {
+          showMessage(result.message || 'Datos guardados exitosamente en Google Sheets.', 'success');
+          if (isInitialSave) {
+            topToolbar.style.display = 'flex';
+            saveCommitmentBtnBottom.style.display = 'none'; // Hide bottom button after successful initial save
+          }
+          return true; // Indicate success
+        } else {
+          throw new Error(result.message || 'Error desconocido al guardar en Google Sheets.');
+        }
+      } catch (error) {
+        showMessage('Error al guardar en Google Sheets: ' + error.message, 'error');
+        console.error('Error saving to Google Sheets:', error);
+        return false; // Indicate failure
+      } finally {
+        buttonElement.disabled = false;
+        buttonElement.textContent = originalButtonText;
+      }
+    }
+
+    saveCommitmentBtnBottom.addEventListener('click', async () => {
+        await handleSaveToSheets(saveCommitmentBtnBottom, true);
+    });
+
+    saveToSheetsBtnTop.addEventListener('click', async () => {
+        await handleSaveToSheets(saveToSheetsBtnTop, false); // Not an initial save
+    });
+    
+    document.getElementById('downloadPdfBtn').addEventListener('click', () => {
+      const element = document.getElementById('documentEditor');
+      updateDynamicContent(); 
+      const name = getElementText('fullName').replace(/\s+/g, '_') || 'Fundador';
+      const opt = {
+        margin:       [12, 8, 12, 8], 
+        filename:     `Compromiso_${name}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false, windowWidth: element.scrollWidth, windowHeight: element.scrollHeight, letterRendering: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      
+      const placeholders = element.querySelectorAll('.content-editable-placeholder');
+      const inputs = element.querySelectorAll('.interactive-input');
+      placeholders.forEach(p => p.style.backgroundColor = 'white'); 
+      inputs.forEach(i => i.style.backgroundColor = 'white');
+
+      html2pdf().from(element).set(opt).save().then(() => {
+        placeholders.forEach(p => p.style.backgroundColor = ''); 
+        inputs.forEach(i => i.style.backgroundColor = '');
+        showMessage('PDF generado exitosamente.', 'success');
+      }).catch(err => {
+        placeholders.forEach(p => p.style.backgroundColor = '');
+        inputs.forEach(i => i.style.backgroundColor = '');
+        showMessage('Error al generar PDF: ' + err.message, 'error');
+        console.error("PDF generation error:", err);
+      });
+    });
+
+    document.getElementById('addToCalendarBtn').addEventListener('click', () => {
+      updateDynamicContent();
+      const data = collectData();
+      if (!data.reviewDate) {
+        showMessage('Por favor, selecciona una Fecha Futura para Revisión.', 'error');
+        return;
+      }
+
+      const title = encodeURIComponent('Revisión Compromiso El Negocio Digital: ' + data.fullName);
+      
+      const reviewDateObj = new Date(data.reviewDate + 'T00:00:00');
+      const startDate = reviewDateObj.toISOString().split('T')[0].replace(/-/g, '');
+      
+      const endDateObj = new Date(reviewDateObj);
+      endDateObj.setDate(reviewDateObj.getDate() + 1);
+      const endDate = endDateObj.toISOString().split('T')[0].replace(/-/g, '');
+
+      let description = `Recordatorio para revisar el compromiso de ${data.fullName} en "El Negocio Digital".\n\n`;
+      description += `Fecha del Compromiso Original: ${new Date(data.commitmentDate + 'T00:00:00').toLocaleDateString('es-ES')}\n\n`;
+      description += `Principales Metas a Corto Plazo:\n`;
+      description += `- ${data.shortTermGoal1.substring(0,100)}...\n`;
+      description += `- ${data.shortTermGoal2.substring(0,100)}...\n\n`;
+      description += `Ver documento completo para más detalles y metas por fase.`;
+      const encodedDescription = encodeURIComponent(description);
+
+      const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDate}/${endDate}&details=${encodedDescription}&sf=true&output=xml`;
+      
+      window.open(calendarUrl, '_blank');
+      showMessage('Abriendo Google Calendar para crear el evento.', 'info');
+    });
+
+    document.getElementById('sendEmailBtn').addEventListener('click', async () => {
+        if (emailJsServiceID === 'TU_EMAILJS_SERVICE_ID_AQUI' || !emailJsServiceID ||
+            emailJsTemplateID === 'TU_EMAILJS_TEMPLATE_ID_AQUI' || !emailJsTemplateID ||
+            emailJsPublicKey === 'TU_EMAILJS_PUBLIC_KEY_AQUI' || !emailJsPublicKey) {
+            showMessage('Error: EmailJS no está configurado. Revisa las instrucciones y completa los IDs y Key en el script.', 'error');
+            document.getElementById('emailJSInstructions').scrollIntoView({ behavior: 'smooth' });
+            return;
+        }
+        updateDynamicContent();
+        const data = collectData();
+        if (!data.fullName || !data.commitmentDate || !data.signature) {
+            showMessage('Por favor, completa Nombre, Fecha de Compromiso y Firma antes de enviar.', 'error');
+            return;
+        }
+
+        const emailRecipient = prompt("Por favor, ingresa el email del destinatario:", "destinatario@ejemplo.com");
+        if (!emailRecipient) {
+            showMessage("Envío cancelado. No se ingresó email.", "info");
+            return;
+        }
+
+        const button = document.getElementById('sendEmailBtn');
+        const originalButtonText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Enviando...';
+        
+        const editorClone = document.getElementById('documentEditor').cloneNode(true);
+        editorClone.querySelectorAll('.content-editable-placeholder').forEach(el => {
+            el.removeAttribute('contenteditable');
+            el.removeAttribute('class'); 
+            el.style.border = 'none';
+            el.style.padding = '2px 0';
+            el.style.backgroundColor = 'transparent';
+        });
+        editorClone.querySelectorAll('input.interactive-input').forEach(input => {
+            const span = document.createElement('span');
+            span.textContent = input.value;
+            span.style.fontWeight = 'bold'; 
+            input.parentNode.replaceChild(span, input);
+        });
+         editorClone.querySelectorAll('label ~ div > button').forEach(btn => btn.remove()); 
+
+        const htmlContentForEmail = editorClone.innerHTML;
+
+        const templateParams = {
+            from_name: data.fullName, 
+            commitment_date: new Date(data.commitmentDate + 'T00:00:00').toLocaleDateString('es-ES'),
+            review_date: new Date(data.reviewDate + 'T00:00:00').toLocaleDateString('es-ES'),
+            contact_email: emailRecipient, 
+            to_email: emailRecipient, 
+            html_content: htmlContentForEmail, 
+        };
+
+        try {
+            await emailjs.send(emailJsServiceID, emailJsTemplateID, templateParams);
+            showMessage(`Compromiso enviado a ${emailRecipient} exitosamente.`, 'success');
+        } catch (error) {
+            showMessage('Error al enviar el email: ' + (error.text || error.message || JSON.stringify(error)), 'error');
+            console.error('EmailJS error:', error);
+        } finally {
+            button.disabled = false;
+            button.textContent = originalButtonText;
+        }
+    });
+
+  </script>
+</body>
+</html>
+
